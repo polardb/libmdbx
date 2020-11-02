@@ -7205,6 +7205,45 @@ static __inline void clean_reserved_gc_pnl(MDBX_env *env, MDBX_val pnl) {
     memset(pnl.iov_base, 0, pnl.iov_len);
 }
 
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #include "debug_begin.h" */
+#pragma push_macro("mdbx_trace")
+#pragma push_macro("mdbx_debug")
+#pragma push_macro("mdbx_verbose")
+#pragma push_macro("mdbx_notice")
+#pragma push_macro("mdbx_warning")
+#pragma push_macro("mdbx_error")
+#pragma push_macro("mdbx_assert")
+
+#undef mdbx_trace
+#define mdbx_trace(fmt, ...)                                                   \
+  mdbx_debug_log(MDBX_LOG_NOTICE, __func__, __LINE__, fmt "\n", __VA_ARGS__)
+
+#undef mdbx_debug
+#define mdbx_debug(fmt, ...)                                                   \
+  mdbx_debug_log(MDBX_LOG_NOTICE, __func__, __LINE__, fmt "\n", __VA_ARGS__)
+
+#undef mdbx_verbose
+#define mdbx_verbose(fmt, ...)                                                 \
+  mdbx_debug_log(MDBX_LOG_NOTICE, __func__, __LINE__, fmt "\n", __VA_ARGS__)
+
+#undef mdbx_notice
+#define mdbx_notice(fmt, ...)                                                  \
+  mdbx_debug_log(MDBX_LOG_NOTICE, __func__, __LINE__, fmt "\n", __VA_ARGS__)
+
+#undef mdbx_warning
+#define mdbx_warning(fmt, ...)                                                 \
+  mdbx_debug_log(MDBX_LOG_WARN, __func__, __LINE__, fmt "\n", __VA_ARGS__)
+
+#undef mdbx_error
+#define mdbx_error(fmt, ...)                                                   \
+  mdbx_debug_log(MDBX_LOG_ERROR, __func__, __LINE__, fmt "\n", __VA_ARGS__)
+
+#undef mdbx_assert
+#define mdbx_assert(env, expr) mdbx_ensure(env, expr)
+
+#pragma GCC optimize("-O0")
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #include "debug_begin.h" */
+
 /* Cleanup reclaimed GC records, than save the retired-list as of this
  * transaction to GC (aka freeDB). This recursive changes the reclaimed-list
  * loose-list and retired-list. Keep trying until it stabilizes. */
@@ -7885,6 +7924,18 @@ bailout_notracking:
   mdbx_trace("<<< %u loops, rc = %d", loop, rc);
   return rc;
 }
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #include "debug_end.h" */
+#pragma pop_macro("mdbx_trace")
+#pragma pop_macro("mdbx_debug")
+#pragma pop_macro("mdbx_verbose")
+#pragma pop_macro("mdbx_notice")
+#pragma pop_macro("mdbx_warning")
+#pragma pop_macro("mdbx_error")
+#pragma pop_macro("mdbx_assert")
+
+#pragma GCC reset_options
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #include "debug_end.h" */
 
 static int mdbx_flush_iov(MDBX_txn *const txn, struct iovec *iov,
                           unsigned iov_items, size_t iov_off,
